@@ -5,6 +5,9 @@ setwd("~/Year 3/Cartography and Data Visualisation/Week 2 Blog Post")
 library(readODS)
 library(httr)
 library(dplyr)
+library(tm)
+library(tmap)
+library(sp) 
 library(sf)
 
 # Downloading the homelessness april to june 2023 data ----
@@ -35,20 +38,12 @@ prevention_grant_allocations_23_25 <- read_ods(temp_file)
 rm(temp_file)
 rm(url)
 
-# Loading UK 2021 shapefile data ----
-url <- "https://open-geography-portalx-ons.hub.arcgis.com/datasets/ons::local-authority-districts-may-2021-uk-bgc-1.zip?where=1=1&outSR=%7B%22latestWkid%22%3A27700%2C%22wkid%22%3A27700%7D"
-
-# Downloading the ZIP file
-download.file(url, destfile = "local_authority_districts.zip")
-
-# Unzip the file
-unzip("local_authority_districts.zip", exdir = "local_authority_districts")
-
-UK_shape <- read_sf("local_authority_districts", "LAD_MAY_2021_UK_BGC")
+# Loading UK 2023 shapefile data ----
+UK_shape <- read_sf("2023_LSOA", "LAD_MAY_2023_UK_BGC_V2")
 
 # Subsetting to only include England
 England_shape <- UK_shape %>%
-  filter(grepl("^E", LAD21CD))
+  filter(grepl("^E", LAD23CD))
 
 # Cleaning homelessness april to june 2023 data ----
 # Setting row 4 as column headers
@@ -71,7 +66,7 @@ homeless_apr_jun_23_subset <- homeless_apr_jun_23_subset %>%
   # Remove rows where the first column is NA
   filter(!is.na(homeless_apr_jun_23_subset$LA_code)) %>%
   # Assign NA to non-numeric values in the fourth column
-  mutate(households_assessed_as_homeless_per_000 = ifelse(!is.na(as.numeric(households_assessed_as_homeless_per_000)), households_assessed_as_homeless_per_000, NA))
+  dplyr::mutate(households_assessed_as_homeless_per_000 = ifelse(!is.na(as.numeric(households_assessed_as_homeless_per_000)), households_assessed_as_homeless_per_000, NA))
 
 # Checking structure 
 str(homeless_apr_jun_23_subset)
@@ -133,7 +128,8 @@ table(prevention_grant_allocations_23_25_subset$LA_name)
 # Merging the data:
 homelessness_merged_data <- merge (homeless_apr_jun_23_subset, prevention_grant_allocations_23_25_subset,
                      by.x = "LA_code",
-                     by.y = "LA_code") 
+                     by.y = "LA_code",
+                     all.x = TRUE) 
 
 # Adding a new variable to indicate actual funds per homeless household (in thousands)
 homelessness_merged_data$allocation_per_thousand_homeless_households <- homelessness_merged_data$prevention_grant_allocation_for_23_24 / homelessness_merged_data$homeless_households_actual_in_thousands
@@ -141,7 +137,7 @@ homelessness_merged_data$allocation_per_thousand_homeless_households <- homeless
 # Left joining homelessness data to the UK shapefile
 uk_homelessness <- merge(England_shape,
                          homelessness_merged_data,
-                         by.x = "LAD21CD",       
+                         by.x = "LAD23CD",       
                          by.y = "LA_code",          
                          all.x = TRUE)              
 
