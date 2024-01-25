@@ -1,14 +1,15 @@
 ---
-title: "My First Blog Post"
-author: "Your Name"
-date: '2024-01-24'
-slug: first-post
-categories:
-  - R
-  - Data Science
-tags:
-  - R Markdown
-  - Blogdown
+title: "Cartography Blog"
+linestretch: 1.5
+fontsize: 12
+output: 
+  html_document:
+    theme: default
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
 ---
 
 # Introduction
