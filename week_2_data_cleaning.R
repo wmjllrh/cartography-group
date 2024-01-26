@@ -7,7 +7,7 @@ library(httr)
 library(dplyr)
 library(tm)
 library(tmap)
-library(sp) 
+library(sp)
 library(sf)
 
 # Downloading the homelessness april to june 2023 data ----
@@ -57,9 +57,9 @@ homeless_apr_jun_23_subset <- homeless_apr_jun_23[,c(1:2, 14, 16)]
 
 # Renaming columns
 names (homeless_apr_jun_23_subset) [1:4] <- c("LA_code",
-                               "LA_name",
-                               "households_in_area_in_thousands",
-                               "households_assessed_as_homeless_per_000")
+                                              "LA_name",
+                                              "households_in_area_in_thousands",
+                                              "households_assessed_as_homeless_per_000")
 
 # Cleanining remaining rows
 homeless_apr_jun_23_subset <- homeless_apr_jun_23_subset %>%
@@ -89,7 +89,7 @@ table(homeless_apr_jun_23_subset$LA_name)
 table(homeless_apr_jun_23_subset$LA_code)
 
 # Adding variable to indicate actual number of homeless households in an area
-homeless_apr_jun_23_subset$homeless_households_actual_in_thousands <- homeless_apr_jun_23_subset$households_assessed_as_homeless_per_000 * homeless_apr_jun_23_subset$households_in_area_in_thousands
+homeless_apr_jun_23_subset$homeless_households_actual <- homeless_apr_jun_23_subset$households_assessed_as_homeless_per_000 * homeless_apr_jun_23_subset$households_in_area_in_thousands
 
 # Cleaning prevention grant data ----
 # Setting row 1 as column headers
@@ -103,8 +103,8 @@ prevention_grant_allocations_23_25_subset <- prevention_grant_allocations_23_25[
 
 # Renaming columns
 names (prevention_grant_allocations_23_25_subset) [1:3] <- c("LA_code",
-                                              "LA_name",
-                                              "prevention_grant_allocation_for_23_24")
+                                                             "LA_name",
+                                                             "prevention_grant_allocation_for_23_24")
 
 # Cleaning remaining rows
 prevention_grant_allocations_23_25_subset <- prevention_grant_allocations_23_25_subset %>%
@@ -127,12 +127,12 @@ table(prevention_grant_allocations_23_25_subset$LA_name)
 # Combined data----
 # Merging the data:
 homelessness_merged_data <- merge (homeless_apr_jun_23_subset, prevention_grant_allocations_23_25_subset,
-                     by.x = "LA_code",
-                     by.y = "LA_code",
-                     all.x = TRUE) 
+                                   by.x = "LA_code",
+                                   by.y = "LA_code",
+                                   all.x = TRUE) 
 
-# Adding a new variable to indicate actual funds per homeless household (in thousands)
-homelessness_merged_data$allocation_per_thousand_homeless_households <- homelessness_merged_data$prevention_grant_allocation_for_23_24 / homelessness_merged_data$homeless_households_actual_in_thousands
+# Adding a new variable to indicate actual funds per homeless household
+homelessness_merged_data$allocation_per_homeless_household <- homelessness_merged_data$prevention_grant_allocation_for_23_24 / homelessness_merged_data$homeless_households_actual
 
 # Left joining homelessness data to the UK shapefile
 uk_homelessness <- merge(England_shape,
@@ -142,4 +142,4 @@ uk_homelessness <- merge(England_shape,
                          all.x = TRUE)              
 
 # Handling created infinite values
-uk_homelessness$allocation_per_thousand_homeless_households[is.infinite(uk_homelessness$allocation_per_thousand_homeless_households)] <- NA
+uk_homelessness$allocation_per_homeless_household[is.infinite(uk_homelessness$allocation_per_homeless_household)] <- NA
